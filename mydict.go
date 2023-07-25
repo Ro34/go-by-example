@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 type DictRequest struct {
@@ -35,12 +36,13 @@ type DictResponse struct {
 	} `json:"dictionary"`
 }
 
-func main() {
+func query(word string) {
 	client := &http.Client{}
 	//var data = strings.NewReader(`{"trans_type":"en2zh","source":"good"}`)
+
 	request := DictRequest{
 		TransType: "en2zh",
-		Source:    "good",
+		Source:    word,
 	}
 
 	buf, err := json.Marshal(request)
@@ -80,12 +82,29 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if resp.StatusCode != 200 {
+		log.Fatal(resp.StatusCode)
+	}
 
 	var dictResponse DictResponse
 	err = json.Unmarshal(bodyText, &dictResponse)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%#v\n\n", dictResponse)
+	//fmt.Printf("%#v\n\n", dictResponse)
+	fmt.Println(word, "UK:", &dictResponse.Dictionary.Prons.En)
+	for _, item := range dictResponse.Dictionary.Explanations {
+		fmt.Println(item)
+	}
 
+}
+
+func main() {
+	if len(os.Args) != 2 {
+		fmt.Fprintf(os.Stderr, `usage:simpleDict WORD`)
+		os.Exit(1)
+	}
+	fmt.Println(os.Args)
+	word := os.Args[1]
+	query(word)
 }
